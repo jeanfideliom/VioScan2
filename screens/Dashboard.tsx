@@ -1,39 +1,47 @@
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { supabase } from '../lib/supabase';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, Button, StyleSheet, ImageBackground } from 'react-native'
+import { supabase } from '../lib/supabase'
+import { useNavigation, NavigationProp } from '@react-navigation/native'
+import { RootStackParamList } from '../lib/types'
 
 export default function Dashboard() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>()
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-  
-      // Ensure navigation goes back to login
-      navigation.navigate('Login');
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      })
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Error signing out:', error)
     }
-  };
-  
-  
-  
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Dashboard</Text>
-      <View style={styles.buttonContainer}>
-        <Button title="Go to Profile" onPress={() => navigation.navigate('Profile')} />
+    <ImageBackground
+      source={require('../assets/background.jpg')} // Replace with your background image path
+      style={styles.background}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Welcome to Dashboard</Text>
+        <View style={styles.buttonContainer}>
+          <Button title="Go to Profile" onPress={() => navigation.navigate('Profile')} />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button title="Sign Out" color="#D32F2F" onPress={handleSignOut} />
+        </View>
       </View>
-      <View style={styles.buttonContainer}>
-        <Button title="Sign Out" onPress={handleLogout} color="#D32F2F" />
-      </View>
-    </View>
-  );
+    </ImageBackground>
+  )
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    resizeMode: 'cover',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -47,6 +55,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
-    marginBottom: 10, // Adds spacing between buttons
+    marginBottom: 10,
   },
-});
+})
