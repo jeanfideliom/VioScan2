@@ -70,7 +70,7 @@ export default function Login({ navigation }: any) {
   const saveUserToDatabase = async (user: User) => {
     try {
       console.log("Saving user to database:", user);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("profile")
         .upsert(
           [
@@ -87,8 +87,12 @@ export default function Login({ navigation }: any) {
           { onConflict: "id" }
         );
 
-      if (error) throw error;
-      console.log("User successfully saved");
+      if (error) {
+        console.error("Error saving user:", error);
+        throw error;
+      }
+
+      console.log("User successfully saved:", data);
     } catch (error) {
       console.error("Error saving user:", error);
       Alert.alert(
@@ -100,13 +104,22 @@ export default function Login({ navigation }: any) {
 
   const saveAgreementStatus = async (user: User) => {
     try {
-      console.log("Saving agreement for user:", user.id);
+      console.log("Saving agreement for user:", user);
 
       const ipAddress = await Network.getIpAddressAsync();
       const agreementVersion = "1.0";
       const agreementText = "I agree to the terms and conditions";
 
-      const { error } = await supabase.from("user_agreements").upsert(
+      console.log("Agreement data:", {
+        user_id: user.id,
+        agreement_text: agreementText,
+        version: agreementVersion,
+        ip_address: ipAddress || "Unknown",
+        status: "active",
+        created_at: new Date().toISOString(),
+      });
+
+      const { data, error } = await supabase.from("user_agreements").upsert(
         [
           {
             user_id: user.id,
@@ -114,6 +127,7 @@ export default function Login({ navigation }: any) {
             version: agreementVersion,
             ip_address: ipAddress || "Unknown",
             status: "active",
+            created_at: new Date().toISOString(),
           },
         ],
         { onConflict: "user_id" }
@@ -125,7 +139,7 @@ export default function Login({ navigation }: any) {
         return;
       }
 
-      console.log("Agreement saved successfully");
+      console.log("Agreement saved successfully:", data);
     } catch (error) {
       console.error("Error saving agreement:", error);
       Alert.alert("Database Error", "Failed to save agreement.");
