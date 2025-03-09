@@ -70,38 +70,10 @@ export default function Login({ navigation }: any) {
   const saveUserToDatabase = async (user: User) => {
     try {
       console.log("Saving user to database:", user);
-  
-      // Check if the user already exists
-      const { data: existingUser, error: fetchError } = await supabase
+      const { error } = await supabase
         .from("profile")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-  
-      if (fetchError && fetchError.code !== "PGRST116") {
-        throw fetchError;
-      }
-  
-      if (existingUser) {
-        // Update the existing user
-        const { error: updateError } = await supabase
-          .from("profile")
-          .update({
-            email: user.email,
-            full_name:
-              user.user_metadata?.full_name ||
-              (user.email ? user.email.split("@")[0] : ""),
-            avatar_url: user.user_metadata?.avatar_url || "",
-            created_at: new Date().toISOString(),
-          })
-          .eq("id", user.id);
-  
-        if (updateError) throw updateError;
-      } else {
-        // Insert a new user
-        const { error: insertError } = await supabase
-          .from("profile")
-          .insert([
+        .upsert(
+          [
             {
               id: user.id,
               email: user.email,
@@ -111,11 +83,11 @@ export default function Login({ navigation }: any) {
               avatar_url: user.user_metadata?.avatar_url || "",
               created_at: new Date().toISOString(),
             },
-          ]);
-  
-        if (insertError) throw insertError;
-      }
-  
+          ],
+          { onConflict: "id" }
+        );
+
+      if (error) throw error;
       console.log("User successfully saved");
     } catch (error) {
       console.error("Error saving user:", error);
