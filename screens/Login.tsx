@@ -7,28 +7,36 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  CheckBox,
+  ActivityIndicator,
 } from "react-native";
+import { CheckBox } from "react-native-elements";
 import { User } from "@supabase/supabase-js";
 
 export default function Login({ navigation }: any) {
   const [isChecked, setIsChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     if (!isChecked) {
-      console.log("User agreement not checked");
       Alert.alert("User Agreement", "You must agree to the terms and conditions to continue.");
       return;
     }
 
+    setLoading(true);
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
+        options: {
+          queryParams: { prompt: "select_account" }, // Forces Google to always ask for login
+        },
       });
+
       if (error) throw error;
     } catch (error) {
       console.error("Authentication Error:", error);
       Alert.alert("Login Failed", "Unable to sign in with Google.");
+      setLoading(false);
     }
   };
 
@@ -39,7 +47,7 @@ export default function Login({ navigation }: any) {
           console.log("Auth state changed:", session.user);
           try {
             await saveUserToDatabase(session.user);
-            navigation.replace("Dashboard");
+            navigation.replace("Main"); // Navigate to the main tab-based screen
           } catch (error) {
             console.error("Error during user save or navigation:", error);
             Alert.alert(
@@ -48,6 +56,7 @@ export default function Login({ navigation }: any) {
             );
           }
         }
+        setLoading(false);
       }
     );
 
@@ -60,7 +69,7 @@ export default function Login({ navigation }: any) {
     try {
       console.log("Saving user to database:", user);
       const { error } = await supabase
-        .from("user_info")
+        .from("profile")
         .upsert(
           [
             {
@@ -104,14 +113,21 @@ export default function Login({ navigation }: any) {
         <Text style={styles.subtitle}>A Violation Detection App</Text>
         <View style={styles.checkboxContainer}>
           <CheckBox
-            value={isChecked}
-            onValueChange={setIsChecked}
-            style={styles.checkbox}
+            checked={isChecked}
+            onPress={() => setIsChecked(!isChecked)}
+            title="I agree to the terms and conditions"
           />
-          <Text style={styles.label}>I agree to the terms and conditions</Text>
         </View>
-        <TouchableOpacity style={styles.button} onPress={handleGoogleSignIn}>
-          <Text style={styles.buttonText}>Continue using Google Sign In</Text>
+        <TouchableOpacity
+          style={[styles.button, loading && styles.disabledButton]}
+          onPress={handleGoogleSignIn}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Continue using Google Sign In</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -162,12 +178,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignItems: "center",
   },
-  checkbox: {
-    alignSelf: "center",
-  },
-  label: {
-    margin: 8,
-  },
   button: {
     width: "80%",
     padding: 15,
@@ -178,5 +188,8 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  disabledButton: {
+    backgroundColor: "#aaa",
   },
 });

@@ -23,7 +23,7 @@ export default function Profile() {
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('user_info')
+        .from('profile')
         .select('*')
         .eq('id', userId)
         .single();
@@ -45,7 +45,10 @@ export default function Profile() {
     <View style={styles.container}>
       {profile ? (
         <>
-          <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+          <Image
+            source={{ uri: profile.avatar_url || 'https://via.placeholder.com/100' }}
+            style={styles.avatar}
+          />
           <Text style={styles.name}>{profile.full_name}</Text>
           <Text style={styles.email}>{profile.email}</Text>
         </>
