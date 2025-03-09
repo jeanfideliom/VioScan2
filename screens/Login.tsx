@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import * as Network from "expo-network"; // Import for IP retrieval
 import {
   View,
   Text,
@@ -47,6 +48,7 @@ export default function Login({ navigation }: any) {
           console.log("Auth state changed:", session.user);
           try {
             await saveUserToDatabase(session.user);
+            await saveAgreementStatus(session.user);
             navigation.replace("Main"); // Navigate to the main tab-based screen
           } catch (error) {
             console.error("Error during user save or navigation:", error);
@@ -93,6 +95,40 @@ export default function Login({ navigation }: any) {
         "Database Error",
         "There was an issue saving user data. Please try again."
       );
+    }
+  };
+
+  const saveAgreementStatus = async (user: User) => {
+    try {
+      console.log("Saving agreement for user:", user.id);
+
+      const ipAddress = await Network.getIpAddressAsync();
+      const agreementVersion = "1.0";
+      const agreementText = "I agree to the terms and conditions";
+
+      const { error } = await supabase.from("user_agreements").upsert(
+        [
+          {
+            user_id: user.id,
+            agreement_text: agreementText,
+            version: agreementVersion,
+            ip_address: ipAddress || "Unknown",
+            status: "active",
+          },
+        ],
+        { onConflict: "user_id" }
+      );
+
+      if (error) {
+        console.error("Error saving agreement:", error);
+        Alert.alert("Database Error", "Failed to save agreement.");
+        return;
+      }
+
+      console.log("Agreement saved successfully");
+    } catch (error) {
+      console.error("Error saving agreement:", error);
+      Alert.alert("Database Error", "Failed to save agreement.");
     }
   };
 
