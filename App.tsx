@@ -13,6 +13,7 @@ import Login from "./screens/Login";
 import Dashboard from "./screens/Dashboard";
 import Profile from "./screens/Profile";
 import Settings from "./screens/Settings";
+import PolicyPage from"./screens/PolicyPage";
 import { RootStackParamList } from "./lib/types";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -28,7 +29,9 @@ function BottomTabs() {
         tabBarIcon: ({ color, size }) => {
           let iconName = "home-outline";
           if (route.name === "Profile") iconName = "person-outline";
+          if (route.name === "Policy") iconName = "document-text-outline";
           if (route.name === "Settings") iconName = "settings-outline";
+          
 
           return <Ionicons name={iconName as keyof typeof Ionicons.glyphMap} size={size} color={color} />;
         },
@@ -43,8 +46,11 @@ function BottomTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} />
+      <Tab.Screen name="Policy" component={PolicyPage} />
       <Tab.Screen name="Profile" component={Profile} />
       <Tab.Screen name="Settings" component={Settings} />
+  
+
     </Tab.Navigator>
   );
 }
